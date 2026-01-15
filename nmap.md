@@ -551,3 +551,263 @@ https://nmap.org/nsedoc/scripts/snmp-brute.html
 
   No output is reported if no valid account is found.
 ```
+---
+# Firewall evasion technique
+
+# 🔰 Beginner → Advanced: Firewall Awareness & Scan Stealth with Nmap
+
+## 🧠 First: How firewalls detect Nmap (core concept)
+
+Firewalls/IDS detect scans based on:
+- Too many packets
+- Weird TCP flags
+- Fast port sweeps
+- Malformed packets
+- Unusual timing
+- Known Nmap signatures
+
+**Your goal is to:**
+
+**Look like normal network traffic, not a scanner.**
+
+## 🟢 BEGINNER LEVEL
+
+(Low noise, exam-safe, everyday pentesting)
+
+### 1️⃣ Slow down your scan (MOST IMPORTANT)
+
+❌ **Bad (loud)**
+
+```bash
+nmap -p- target
+```
+
+✅ **Better**
+
+```bash
+nmap -p 1-1000 target
+```
+
+Firewalls trigger on:
+- Full port sweeps
+- Rapid connections
+
+### 2️⃣ Use normal TCP connect scan
+
+```bash
+nmap -sT target
+```
+
+**Why:**
+- Uses OS TCP stack
+- Looks like a real application
+- Less suspicious than SYN scans
+
+**Trade-off:**
+- Slower
+- Logged more easily
+
+### 3️⃣ Reduce scan speed (VERY IMPORTANT)
+
+```bash
+nmap -T2 target
+```
+
+**Timing templates:**
+
+| Option | Meaning |
+|--------|---------|
+| `-T0` | Paranoid |
+| `-T1` | Sneaky |
+| `-T2` | Polite |
+| `-T3` | Normal |
+| `-T4` | Aggressive |
+| `-T5` | Insane |
+
+👉 **-T2 is best for stealth**
+
+### 4️⃣ Limit retries
+
+```bash
+nmap --max-retries 2 target
+```
+
+**Why:**
+- Firewalls notice repeated failed attempts
+
+## 🟡 INTERMEDIATE LEVEL
+
+(Understanding firewall logic)
+
+### 5️⃣ Scan common ports only
+
+```bash
+nmap --top-ports 100 target
+```
+
+Firewalls often allow:
+- 80
+- 443
+- 22
+- 53
+
+This blends into normal traffic.
+
+### 6️⃣ Use service version detection carefully
+
+❌ **Loud**
+
+```bash
+nmap -sV target
+```
+
+✅ **Controlled**
+
+```bash
+nmap -sV --version-intensity 2 target
+```
+
+High intensity:
+- Sends many probes
+- Triggers IDS
+
+### 7️⃣ Fragment packets (sometimes useful)
+
+```bash
+nmap -f target
+```
+
+**What it does:**
+- Splits packets into fragments
+- Some simple firewalls fail to reassemble
+
+⚠️ Modern firewalls usually handle this.
+
+### 8️⃣ Disable DNS resolution
+
+```bash
+nmap -n target
+```
+
+**Why:**
+- DNS lookups generate extra noise
+- DNS logs are often monitored
+
+## 🟠 ADVANCED LEVEL
+
+(Detection evasion concepts, not magic)
+
+### 9️⃣ Decoy scanning (confuses attribution)
+
+```bash
+nmap -D RND:10 target
+```
+
+**What happens:**
+- Scan appears to come from many IPs
+- Target can't easily identify the real scanner
+
+⚠️ Detection still happens, attribution is harder.
+
+### 🔟 Spoof source port (VERY COMMON)
+
+```bash
+nmap --source-port 53 target
+```
+
+**Why it works:**
+- Firewalls often trust DNS traffic
+- Looks like a response, not a scan
+
+**Other common ports:**
+- 53 (DNS)
+- 80 (HTTP)
+- 443 (HTTPS)
+
+### 1️⃣1️⃣ Idle scan (advanced & rare)
+
+```bash
+nmap -sI zombie_host target
+```
+
+**Requires:**
+- Predictable IP ID
+- External "zombie" host
+
+**This is:**
+- Very stealthy
+- Rare in real networks
+- Mostly academic
+
+## 🔴 EXPERT / RED-TEAM AWARENESS
+
+(Conceptual, not exam-required)
+
+### 1️⃣2️⃣ Understand IDS signatures
+
+Firewalls look for:
+- SYN scans without completion
+- Sequential port access
+- Odd TCP flag combinations
+- Timing patterns
+
+**So pros:**
+- Randomize ports
+- Slow scans
+- Mix protocols
+- Stop scanning early
+
+### 1️⃣3️⃣ Nmap scripting = loud by default
+
+```bash
+nmap --script vuln target
+```
+
+⚠️ **Almost guaranteed detection.**
+
+**Use only when:**
+- Allowed
+- After permission
+- On internal networks
+
+## 🧠 Reality Check (VERY IMPORTANT)
+
+### ❌ Myths
+
+- "Nmap can't be detected" → false
+- "Stealth scans are invisible" → false
+- "Firewall evasion = hacking" → false
+
+### ✅ Truth
+
+**Good pentesters don't avoid detection — they manage it.**
+
+## 🧪 Exam-Safe Recommendation (eJPT)
+
+For exams, stick to:
+
+```bash
+nmap -sT -T2 --top-ports 100 -n target
+```
+
+This is:
+- Quiet
+- Reliable
+- Acceptable
+- Professional
+
+## 🧠 Defensive Insight (WHY this matters)
+
+Understanding this helps you:
+- Design better firewalls
+- Tune IDS rules
+- Recognize scanning behavior
+- Reduce false positives
+
+## TL;DR (MEMORIZE)
+
+- Slow scans beat fancy scans
+- Timing matters more than flags
+- Common ports blend in
+- Fragmentation & decoys confuse, don't hide
+- **Detection is inevitable — manage it**
